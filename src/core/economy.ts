@@ -1,4 +1,5 @@
 import type { GameState, Province, Season } from './state.js';
+import { clamp01 } from './util.js';
 
 export const FOOD_PER_PEASANT = 0.008; // 每农民每季消耗（koku-rice）
 export const FOOD_PER_SOLDIER = 0.04; // 每兵每季消耗
@@ -53,4 +54,20 @@ export function runUpkeep(state: GameState): UpkeepReport {
   const famine = state.clan.koku < 0;
   if (famine) state.clan.koku = 0;
   return { produced, consumed, price, net, taxRevenue, famine };
+}
+
+export const TAX_DISCONTENT = 0.5; // 税率对民心的压制系数
+export const FAMINE_PENALTY = 0.2;
+export const CONTENTMENT_DRIFT = 0.34; // 每季向目标漂移的比例
+
+export function targetContentment(state: GameState, famine: boolean): number {
+  let t = 0.65 - state.taxRate * TAX_DISCONTENT;
+  if (famine) t -= FAMINE_PENALTY;
+  return clamp01(t);
+}
+
+export function updateContentment(state: GameState, famine: boolean): void {
+  const target = targetContentment(state, famine);
+  const next = state.clan.contentment + (target - state.clan.contentment) * CONTENTMENT_DRIFT;
+  state.clan.contentment = clamp01(next);
 }
