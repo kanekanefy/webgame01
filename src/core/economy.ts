@@ -56,7 +56,7 @@ export function runUpkeep(state: GameState): UpkeepReport {
   return { produced, consumed, price, net, taxRevenue, famine };
 }
 
-export const TAX_DISCONTENT = 0.5; // 税率对民心的压制系数
+export const TAX_DISCONTENT = 0.6; // 税率对民心的压制系数
 export const FAMINE_PENALTY = 0.2;
 export const CONTENTMENT_DRIFT = 0.34; // 每季向目标漂移的比例
 
