@@ -41,10 +41,17 @@ describe('advanceTurn', () => {
     advanceTurn(s, null);
     expect(s.status).toBe('lost');
   });
-  it('撑到 goalYear → 判胜', () => {
-    const s = buildState({ ...scen, goalYear: 1560 });
-    // 跑满一年回到 Spring 时 year 已 >= goalYear
-    for (let i = 0; i < 4; i++) advanceTurn(s, { actionId: 'hold_festival', params: {} });
+  it('撑到 goalYear → 判胜（跑满一年跨年后才达成）', () => {
+    const s = buildState({ ...scen, goalYear: 1561 });
+    // 前三回合仍在 1560 年内，不应判胜
+    for (let i = 0; i < 3; i++) advanceTurn(s, { actionId: 'hold_festival', params: {} });
+    expect(s.status).toBe('playing');
+    expect(s.year).toBe(1560);
+    // 第四回合 Winter→Spring 跨入 1561，回合末判胜
+    advanceTurn(s, { actionId: 'hold_festival', params: {} });
+    expect(s.year).toBe(1561);
+    expect(s.season).toBe('Spring');
+    expect(s.turn).toBe(4);
     expect(s.status).toBe('won');
   });
 });

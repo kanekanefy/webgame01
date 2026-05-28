@@ -49,10 +49,17 @@ function advanceCalendar(state: GameState): void {
   state.turn += 1;
 }
 
-function checkWinLose(state: GameState): void {
+// 崩盘判负：民心或威信跌破阈值即败。入口与回合末都会调用。
+function checkLose(state: GameState): void {
   if (state.clan.contentment <= LOSE_CONTENTMENT || state.clan.prestige <= LOSE_PRESTIGE) {
     state.status = 'lost';
-  } else if (state.year >= state.goalYear) {
+  }
+}
+
+// 回合末综合判定：先判负，未败再看是否撑到目标年判胜。
+function checkWinLose(state: GameState): void {
+  checkLose(state);
+  if (state.status === 'playing' && state.year >= state.goalYear) {
     state.status = 'won';
   }
 }
@@ -61,8 +68,9 @@ export function advanceTurn(state: GameState, decree: Decree | null): TurnReport
   const rng = new RNG(state.rngState);
   const ctx: ActionContext = { rng };
 
-  // 先检查初始状态是否已经失败（崩盘边界）
-  checkWinLose(state);
+  // 入口仅检查崩盘：已经收场的局面不再处理本回合。
+  // 胜利只在回合末（日历推进后）判定，避免“开局即达标就跳过整回合”。
+  checkLose(state);
   if (state.status !== 'playing') {
     return {
       turn: state.turn,
