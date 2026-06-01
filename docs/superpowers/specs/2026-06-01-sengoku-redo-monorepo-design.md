@@ -117,7 +117,7 @@ webgame01/  (monorepo 根, pnpm workspace)
 
 - **复用（治理层）**：Directors(creative/technical/producer) + `production/sprint-status.yaml` 追踪 + 命令链(`/brainstorm /create-epics /create-stories /sprint-plan /story-readiness /story-done /code-review /gate-check /qa-plan /smoke-check /release-checklist`) + hooks(validate-commit/push, session/compact) + leads(game-designer/narrative-director/qa-lead) + specialists(systems/economy-designer, ux, writer, world-builder, qa-tester, analytics)。
 - **改造**：ui-programmer→React 工程师；gameplay-programmer→TS 数值核心；devops→补 Cloudflare；security→Worker 鉴权/prompt 注入；performance→Web Vitals；rules/hooks 换内核（`validate-commit` 接 `pnpm tsc --noEmit && pnpm test`）。
-- **弃用**：所有 godot/unity/ue 特化 + engine/network programmer 等 ~20 个；重写 `/dev-story` 路由表（按 packages/ 路由）。
+- **休眠保留（不删除）**：所有 godot/unity/ue 特化 + engine/network programmer 等 ~20 个角色**保留待用**——它们是将来转 Godot/手游时的现成角色库（呼应"Godot 作为按需启用的未来选项"，未来选项与其配套角色资产成对保留）。现阶段仅在 `/dev-story` 路由表中不参与 web 路由，不激活、不消耗；引擎阶段直接启用。重写 `/dev-story` 路由表时按 `packages/` 路由到 web 角色。
 - **新建 web 角色**：`frontend-engineer`、`cloudflare-devops`、`backend-engineer`、`narrative-systems-engineer`、`web-qa`、`game-balance-engineer`。
 
 ## 10. 迁移路线图与里程碑
