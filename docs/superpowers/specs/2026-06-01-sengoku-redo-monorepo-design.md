@@ -110,7 +110,9 @@ webgame01/  (monorepo 根, pnpm workspace)
 
 ## 8. 美术 / 音频管线（轻量）
 
-- **美术（agnes-ai image-2.1-flash, ~$0.003/张）**：开发期预生成。`prompts.jsonl` → 并发 3–5 调用(自建限流+退避) → **立即下载落库**(返回 URL 是 test bucket，不可直链) → 多抽人工筛 → 精修 → `apps/web/public/assets`。优先级：事件插画/UI背景/概念图 > 立绘(图生图+精修) > 图标。游戏内文字**一律前端渲染**，不让图像模型写字。
+> **管线 SOP 见 [`design/art/art-pipeline.md`](../../../design/art/art-pipeline.md)**（两段式：上游用 `imgen` 定调出高质量视觉锚点，提炼色温/媒介/构图三件套；下游 agnes-ai 按锚点批量铺量）。下文 agnes 批量即该 SOP 的「铺量」环节。
+
+- **美术（上游定调 imgen + 下游批量 agnes-ai image-2.1-flash, ~$0.003/张）**：开发期预生成。先 `imgen` 定调锚点（`design/art/concept/`）→ agnes `prompts.jsonl` 复述锚点风格参数 → 并发 3–5 调用(自建限流+退避) → **立即下载落库**(返回 URL 是 test bucket，不可直链) → 多抽人工筛 → 精修 → `apps/web/public/assets`。优先级：事件插画/UI背景/概念图 > 立绘(图生图+精修) > 图标。游戏内文字**一律前端渲染**，不让图像模型写字。`prompts.jsonl` → 并发 3–5 调用(自建限流+退避) → **立即下载落库**(返回 URL 是 test bucket，不可直链) → 多抽人工筛 → 精修 → `apps/web/public/assets`。优先级：事件插画/UI背景/概念图 > 立绘(图生图+精修) > 图标。游戏内文字**一律前端渲染**，不让图像模型写字。
 - **音频（ElevenLabs Creator 档 131k/月，含商用授权）**：预生成 UI音效 + 1–2 条循环环境音(`loop:true`) + 少量精品事件旁白(`eleven_v3`)。全量家臣配音 + 母语声音克隆放文案定稿后。运行时零调用，全静态资源。
 
 ## 9. CCGS 工作流落地（.claude 改造）

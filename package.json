@@ -4,11 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "concurrently -k -n worker,web -c blue,green \"pnpm dev:worker\" \"pnpm dev:web\"",
+    "dev:worker": "wrangler dev",
+    "dev:web": "pnpm --filter @sengoku/web dev",
+    "build": "pnpm --filter @sengoku/web build",
     "test": "pnpm -r test",
+    "e2e": "pnpm --filter @sengoku/web e2e",
+    "deploy": "pnpm build && wrangler deploy",
+    "typecheck": "pnpm -r typecheck",
     "core:test": "pnpm --filter @sengoku/core test",
     "core:headless": "pnpm --filter @sengoku/core headless"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
+    "concurrently": "^9.1.0",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.20.0"
   }
 }

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <circle cx="32" cy="32" r="31" fill="#15100c" stroke="#c9a44a" stroke-width="2"/>
+  <g fill="none" stroke="#e6c463" stroke-width="2.4">
+    <!-- 木瓜纹风格：外环四瓣 + 内核 -->
+    <ellipse cx="32" cy="14" rx="9" ry="11"/>
+    <ellipse cx="32" cy="50" rx="9" ry="11"/>
+    <ellipse cx="14" cy="32" rx="11" ry="9"/>
+    <ellipse cx="50" cy="32" rx="11" ry="9"/>
+  </g>
+  <circle cx="32" cy="32" r="7" fill="#c9a44a"/>
+  <circle cx="32" cy="32" r="3" fill="#15100c"/>
+</svg>

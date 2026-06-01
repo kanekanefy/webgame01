@@ -149,3 +149,9 @@ $RECYCLE.BIN/
 .wrangler/
 production/session-state/
 .turbo/
+
+# === Playwright / E2E artifacts ===
+.playwright-mcp/
+playwright-report/
+test-results/
+court-playing.png

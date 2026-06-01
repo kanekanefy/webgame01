@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+
+/* 战国「评定」主题 token */
+@theme {
+  --color-sumi: #15100c; /* 墨 */
+  --color-sumi-soft: #221a13;
+  --color-washi: #e8dcc0; /* 和纸 */
+  --color-washi-dim: #b8a888;
+  --color-kin: #c9a44a; /* 金 */
+  --color-kin-bright: #e6c463;
+  --color-shu: #a8341f; /* 朱 */
+  --color-shu-bright: #c9492e;
+  --color-matcha: #6b7a4a; /* 抹茶 */
+  --color-ai: #3a5a6b; /* 蓝 */
+  --font-display: 'Hiragino Mincho ProN', 'Yu Mincho', 'Songti SC', 'Noto Serif JP', serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--color-sumi);
+  color: var(--color-washi);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 金箔分隔线 */
+.kin-rule {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-kin) 20%,
+    var(--color-kin-bright) 50%,
+    var(--color-kin) 80%,
+    transparent
+  );
+  height: 1px;
+}
+
+/* 印章脉动（结局横幅） */
+@keyframes seal-in {
+  0% {
+    transform: scale(1.4) rotate(-8deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.95) rotate(-8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+}
+.seal-in {
+  animation: seal-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* 数值变化微光 */
+@keyframes stat-pulse {
+  0% {
+    color: var(--color-kin-bright);
+    text-shadow: 0 0 10px rgba(230, 196, 99, 0.6);
+  }
+  100% {
+    color: inherit;
+    text-shadow: none;
+  }
+}
+.stat-pulse {
+  animation: stat-pulse 0.8s ease-out;
+}
+
+/* 卷轴淡入 */
+@keyframes scroll-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.scroll-fade {
+  animation: scroll-fade 0.4s ease-out both;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-kin);
+  opacity: 0.4;
+  border-radius: 4px;
+}

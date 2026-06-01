@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sengoku-sim",
+  "main": "apps/worker/src/index.ts",
+  "compatibility_date": "2025-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./apps/web/dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
+    "not_found_handling": "single-page-application"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "GAME_SESSION", "class_name": "GameSession" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameSession"] }],
+  "observability": { "enabled": true }
+}
