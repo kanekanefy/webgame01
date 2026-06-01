@@ -142,3 +142,10 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+
+# === Monorepo / Web / Cloudflare (sengoku redo) ===
+.dev.vars
+.dev.vars.*
+.wrangler/
+production/session-state/
+.turbo/

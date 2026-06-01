@@ -1,0 +1,24 @@
+{
+  "startYear": 1560,
+  "goalYear": 1565,
+  "seed": 20260529,
+  "taxRate": 0.3,
+  "clan": { "koku": 500, "levy": 120, "contentment": 0.6, "prestige": 0.5 },
+  "provinces": [
+    { "id": "owari", "name": "尾張", "villages": [{ "peasants": 4000 }, { "peasants": 3000 }], "baseRiceOutput": 0.03, "fortification": 2, "garrison": 60, "productionMethod": "basic" },
+    { "id": "mino", "name": "美濃", "villages": [{ "peasants": 3500 }], "baseRiceOutput": 0.03, "fortification": 1, "garrison": 40, "productionMethod": "basic" },
+    { "id": "ise", "name": "伊勢", "villages": [{ "peasants": 2500 }], "baseRiceOutput": 0.028, "fortification": 1, "garrison": 30, "productionMethod": "basic" }
+  ],
+  "retainers": [
+    { "id": "katsuie", "name": "柴田勝家", "loyalty": 0.75, "ambition": 0.4, "skillAdmin": 0.4, "skillWar": 0.85, "traits": ["勇猛", "刚直"], "role": "侍大将" },
+    { "id": "hideyoshi", "name": "木下藤吉郎", "loyalty": 0.6, "ambition": 0.9, "skillAdmin": 0.85, "skillWar": 0.6, "traits": ["机敏", "野心"], "role": "奉行" },
+    { "id": "toshiie", "name": "前田利家", "loyalty": 0.8, "ambition": 0.5, "skillAdmin": 0.5, "skillWar": 0.75, "traits": ["忠义"], "role": "侍大将" },
+    { "id": "nobumori", "name": "佐久間信盛", "loyalty": 0.65, "ambition": 0.5, "skillAdmin": 0.6, "skillWar": 0.6, "traits": ["谨慎"], "role": "宿老" },
+    { "id": "mitsuhide", "name": "明智光秀", "loyalty": 0.55, "ambition": 0.7, "skillAdmin": 0.8, "skillWar": 0.7, "traits": ["博学", "孤高"], "role": "右筆" }
+  ],
+  "rivals": [
+    { "id": "imagawa", "name": "今川", "strength": 450, "disposition": 0.15 },
+    { "id": "saito", "name": "斎藤", "strength": 220, "disposition": 0.3 },
+    { "id": "asai", "name": "浅井", "strength": 180, "disposition": 0.45 }
+  ]
+}
