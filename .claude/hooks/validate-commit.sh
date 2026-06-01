@@ -1,5 +1,5 @@
 #!/bin/bash
-# Claude Code PreToolUse hook: Validates git commit commands
+# Claude Code PreToolUse hook: Validates git commit commands (web / TypeScript stack)
 # Receives JSON on stdin with tool_input.command
 # Exit 0 = allow, Exit 2 = block (stderr shown to Claude)
 #
@@ -42,47 +42,37 @@ if [ -n "$DESIGN_FILES" ]; then
     done <<< "$DESIGN_FILES"
 fi
 
-# Validate JSON data files -- block invalid JSON
-DATA_FILES=$(echo "$STAGED" | grep -E '^assets/data/.*\.json$')
+# Validate JSON data files via node (no python dependency) -- block invalid JSON
+DATA_FILES=$(echo "$STAGED" | grep -E '\.json$' | grep -E '(^content/|/content/)')
 if [ -n "$DATA_FILES" ]; then
-    # Find a working Python command
-    PYTHON_CMD=""
-    for cmd in python python3 py; do
-        if command -v "$cmd" >/dev/null 2>&1; then
-            PYTHON_CMD="$cmd"
-            break
-        fi
-    done
-
-    while IFS= read -r file; do
-        if [ -f "$file" ]; then
-            if [ -n "$PYTHON_CMD" ]; then
-                if ! "$PYTHON_CMD" -m json.tool "$file" > /dev/null 2>&1; then
+    if command -v node >/dev/null 2>&1; then
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                if ! node -e "JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))" "$file" >/dev/null 2>&1; then
                     echo "BLOCKED: $file is not valid JSON" >&2
                     exit 2
                 fi
-            else
-                echo "WARNING: Cannot validate JSON (python not found): $file" >&2
             fi
-        fi
-    done <<< "$DATA_FILES"
+        done <<< "$DATA_FILES"
+    else
+        echo "WARNING: Cannot validate JSON (node not found): skipping" >&2
+    fi
 fi
 
-# Check for hardcoded gameplay values in gameplay code
-# Uses grep -E (POSIX extended) instead of grep -P (Perl) for cross-platform compatibility
-CODE_FILES=$(echo "$STAGED" | grep -E '^src/gameplay/')
+# Check for hardcoded numeric values in core (should live in content/)
+CODE_FILES=$(echo "$STAGED" | grep -E '^packages/core/src/')
 if [ -n "$CODE_FILES" ]; then
     while IFS= read -r file; do
         if [ -f "$file" ]; then
-            if grep -nE '(damage|health|speed|rate|chance|cost|duration)[[:space:]]*[:=][[:space:]]*[0-9]+' "$file" 2>/dev/null; then
-                WARNINGS="$WARNINGS\nCODE: $file may contain hardcoded gameplay values. Use data files."
+            if grep -nE '(damage|health|koku|levy|contentment|prestige|rate|chance|cost|duration)[[:space:]]*[:=][[:space:]]*[0-9]+' "$file" 2>/dev/null; then
+                WARNINGS="$WARNINGS\nCODE: $file may contain hardcoded values. Prefer content/ data."
             fi
         fi
     done <<< "$CODE_FILES"
 fi
 
-# Check for TODO/FIXME without assignee -- uses grep -E instead of grep -P
-SRC_FILES=$(echo "$STAGED" | grep -E '^src/')
+# Check for TODO/FIXME without assignee in TS sources
+SRC_FILES=$(echo "$STAGED" | grep -E '^(packages|apps)/.*\.(ts|tsx)$')
 if [ -n "$SRC_FILES" ]; then
     while IFS= read -r file; do
         if [ -f "$file" ]; then
@@ -91,6 +81,11 @@ if [ -n "$SRC_FILES" ]; then
             fi
         fi
     done <<< "$SRC_FILES"
+fi
+
+# Non-blocking reminder for TS changes
+if echo "$STAGED" | grep -qE '\.(ts|tsx)$'; then
+    WARNINGS="$WARNINGS\nREMINDER: TS changed -- run 'pnpm -r test' and 'pnpm --filter @sengoku/core exec tsc --noEmit' before pushing."
 fi
 
 # Print warnings (non-blocking) and allow commit
