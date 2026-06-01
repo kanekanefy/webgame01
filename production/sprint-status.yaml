@@ -141,8 +141,39 @@ stories:
     name: "GitHub Actions CI（pnpm -r test 门禁 → deploy）"
     file: "production/sprints/sprint-1.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: "cloudflare-devops"
     estimate_days: 0.5
     blocker: "S1-INT-001"
-    completed: ""
+    completed: "2026-06-02"
+
+  # —— R2/R3 alpha 增量（sprint-1 之外的里程碑）——
+  - id: "R2-AI-001"
+    name: "packages/ai：Provider/Mock/真LLM/IntentParser/Narrator/时代锁 + 契约测试"
+    file: "docs/superpowers/specs/2026-06-02-r2-ai-narrative-impl.md"
+    priority: must-have
+    status: done
+    owner: "narrative-systems-engineer"
+    estimate_days: 2.0
+    blocker: "S1-INT-001"
+    completed: "2026-06-02"
+
+  - id: "R3-ART-001"
+    name: "美术：朝议厅背景 + 胜/败结局立绘 + 家纹 favicon（imgen 定调）"
+    file: "design/art/art-pipeline.md"
+    priority: should-have
+    status: done
+    owner: "art-director"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-06-02"
+
+  - id: "R3-DOC-001"
+    name: "README + .dev.vars.example + CI 工作流（alpha 交付物）"
+    file: "README.md"
+    priority: must-have
+    status: done
+    owner: "producer"
+    estimate_days: 0.5
+    blocker: ""
+    completed: "2026-06-02"
