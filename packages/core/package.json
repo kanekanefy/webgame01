@@ -1,5 +1,5 @@
 {
-  "name": "sengoku-sim",
+  "name": "@sengoku/core",
   "version": "0.0.0",
   "type": "module",
   "private": true,
