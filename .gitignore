@@ -150,6 +150,11 @@ $RECYCLE.BIN/
 production/session-state/
 .turbo/
 
+# === Secrets / 密钥（绝不入库）===
+secrets/
+.env.tools
+*.key.env
+
 # === Playwright / E2E artifacts ===
 .playwright-mcp/
 playwright-report/

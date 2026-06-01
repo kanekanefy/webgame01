@@ -28,7 +28,8 @@ export async function narrate(provider: Provider, input: NarrateInput): Promise<
     },
   ];
   try {
-    const res = await provider.complete(messages, { maxTokens: 200, temperature: 0.85 });
+    // 推理模型（minimax-m2.7）的 reasoning 与 content 分字段；token 需足够让 reasoning+content 都完成。
+    const res = await provider.complete(messages, { maxTokens: 800, temperature: 0.85 });
     const text = res.content.trim();
     if (text) return text;
   } catch {

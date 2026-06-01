@@ -1,4 +1,5 @@
 import { useGame } from '../store';
+import { eventArtForKind, eventArtForIssue } from '../eventArt';
 
 const SEASON_CN: Record<string, string> = {
   Spring: '春',
@@ -6,6 +7,15 @@ const SEASON_CN: Record<string, string> = {
   Autumn: '秋',
   Winter: '冬',
 };
+
+/** 取本回合最贴切的事件插画：优先有图的 fact kind，退而求其次用议题。 */
+function pickArt(kinds: string[], issue: string): string | null {
+  for (const k of kinds) {
+    const url = eventArtForKind(k);
+    if (url) return url;
+  }
+  return eventArtForIssue(issue);
+}
 
 export function ReportLog() {
   const log = useGame((s) => s.log);
@@ -32,13 +42,27 @@ export function ReportLog() {
       )}
 
       <ol className="flex flex-col gap-3">
-        {log.map((e) => (
+        {log.map((e) => {
+          const art = e.rejected ? null : pickArt(e.kinds, e.issue);
+          return (
           <li
             key={e.id}
-            className={`scroll-fade rounded-sm border px-3 py-2 ${
+            className={`scroll-fade overflow-hidden rounded-sm border ${
               e.rejected ? 'border-shu/30 bg-shu/5' : 'border-kin/15 bg-sumi-soft/50'
             }`}
           >
+            {art && (
+              <div className="relative h-28 w-full sm:h-32">
+                <img
+                  src={art}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-sumi-soft/90 to-transparent" />
+              </div>
+            )}
+            <div className="px-3 py-2">
             <div className="mb-1 flex items-baseline justify-between gap-2">
               <span className="text-xs tracking-widest text-washi-dim">
                 {e.year} 年 · {SEASON_CN[e.season] ?? e.season}
@@ -61,8 +85,10 @@ export function ReportLog() {
               </p>
             )}
             {e.narrative && <p className="mt-1 text-sm text-washi-dim">{e.narrative}</p>}
+            </div>
           </li>
-        ))}
+          );
+        })}
       </ol>
     </section>
   );

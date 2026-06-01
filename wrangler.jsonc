@@ -14,5 +14,11 @@
     "bindings": [{ "name": "GAME_SESSION", "class_name": "GameSession" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameSession"] }],
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // 非密钥配置（密钥 LLM_API_KEY 走 `wrangler secret put`，绝不入库）。
+  // 不设 LLM_API_KEY 时 Worker 自动用 MockProvider。
+  "vars": {
+    "LLM_BASE_URL": "https://api.generalcompute.com/v1",
+    "LLM_MODEL": "minimax-m2.7"
+  }
 }

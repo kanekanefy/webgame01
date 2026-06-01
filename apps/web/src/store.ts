@@ -11,6 +11,8 @@ interface LogEntry {
   intent?: string | null;
   facts: string[];
   events: string[];
+  /** fact/event 的 kind（用于事件插画映射）。 */
+  kinds: string[];
   rejected?: boolean;
   reason?: string;
   narrative?: string;
@@ -94,6 +96,7 @@ function applyTurn(set: SetFn, resp: import('./types').TurnResponse, command?: s
           intent: command ? `（驳回）${command}` : '（驳回）',
           facts: [],
           events: [],
+          kinds: [],
           rejected: true,
           reason: resp.reason,
           narrative: resp.narrative,
@@ -119,6 +122,7 @@ function applyTurn(set: SetFn, resp: import('./types').TurnResponse, command?: s
         intent: resp.intent,
         facts: report.actionFacts.map((f) => f.text),
         events: report.events.map((f) => f.text),
+        kinds: [...report.actionFacts, ...report.events].map((f) => f.kind),
         narrative: resp.narrative,
       },
       ...s.log,

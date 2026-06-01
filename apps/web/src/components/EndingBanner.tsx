@@ -3,7 +3,7 @@ import type { GameState } from '../types';
 export function EndingBanner({ state, onRestart }: { state: GameState; onRestart: () => void }) {
   if (state.status === 'playing') return null;
   const won = state.status === 'won';
-  const art = won ? '/assets/ending-win.png' : '/assets/ending-lose.png';
+  const art = won ? '/assets/ending-win.jpg' : '/assets/ending-lose.jpg';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-sumi/85 p-4 backdrop-blur-sm">
