@@ -12,10 +12,11 @@
       "Bash(git branch*)",
       "Bash(git rev-parse*)",
       "Bash(ls *)",
-      "Bash(dir *)",
-      "Bash(python -m json.tool*)",
-      "Bash(python -m pytest*)",
-      "Bash(py -m pytest*)"
+      "Bash(pnpm *)",
+      "Bash(npx vitest*)",
+      "Bash(npx wrangler*)",
+      "Bash(npx tsc*)",
+      "Bash(node *)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -28,7 +29,10 @@
       "Bash(*>.env*)",
       "Bash(cat *.env*)",
       "Bash(type *.env*)",
-      "Read(**/.env*)"
+      "Read(**/.env*)",
+      "Bash(*>.dev.vars*)",
+      "Bash(cat *.dev.vars*)",
+      "Read(**/.dev.vars*)"
     ]
   },
   "hooks": {
