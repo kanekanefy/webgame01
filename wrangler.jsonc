@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sengoku-sim",
+  "account_id": "90ed39031227fe2597f40a77782f44d0",
   "main": "apps/worker/src/index.ts",
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],

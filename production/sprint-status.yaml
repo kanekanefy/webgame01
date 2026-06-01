@@ -118,14 +118,14 @@ stories:
     completed: "2026-06-02"
 
   - id: "S1-CF-001"
-    name: "wrangler deploy 线上可访问（R1 末选做）"
+    name: "wrangler deploy 线上可访问（https://sengoku-sim.ingle.workers.dev）"
     file: "production/sprints/sprint-1.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "cloudflare-devops"
     estimate_days: 0.5
     blocker: "S1-INT-001"
-    completed: ""
+    completed: "2026-06-02"
 
   - id: "S1-FE-004"
     name: "Tailwind 朝议风格打磨 + 移动端响应式"
