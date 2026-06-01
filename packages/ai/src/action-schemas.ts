@@ -6,11 +6,12 @@ import type { ToolDef } from './provider.js';
  * 加一个 reject_intent 工具表达「无法奉行/不合时代」。
  * provinceId / retainerId 的 enum 依赋当前 state 注入。
  */
-export function buildToolDefs(state?: GameState): ToolDef[] {
+export function buildToolDefs(state?: GameState, opts: { allowReject?: boolean } = {}): ToolDef[] {
   const provinceIds = state?.provinces.map((p) => p.id) ?? [];
   const retainerIds = state?.retainers.map((r) => r.id) ?? [];
+  const allowReject = opts.allowReject ?? true;
 
-  return [
+  const tools: ToolDef[] = [
     {
       type: 'function',
       function: {
@@ -106,7 +107,12 @@ export function buildToolDefs(state?: GameState): ToolDef[] {
         },
       },
     },
-    {
+  ];
+
+  // reject_intent 默认不暴露给 LLM——拒绝只走确定性时代锁（period-lock），
+  // 逼模型「无论多笼统都映射到一个动作」，最大化自由度。仅 opts.allowReject 时加入。
+  if (allowReject) {
+    tools.push({
       type: 'function',
       function: {
         name: 'reject_intent',
@@ -124,8 +130,10 @@ export function buildToolDefs(state?: GameState): ToolDef[] {
           required: ['reason'],
         },
       },
-    },
-  ];
+    });
+  }
+
+  return tools;
 }
 
 export const ACTION_NAMES = [

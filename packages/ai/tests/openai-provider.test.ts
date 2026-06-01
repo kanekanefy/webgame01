@@ -49,7 +49,7 @@ describe('OpenAIProvider（注入 fetch，零真实网络）', () => {
     expect(r.kind).toBe('rejected');
   });
 
-  it('非法 provinceId 被拒（本地白名单校验）→ 最终 rejected', async () => {
+  it('非法 provinceId（本地白名单不过）→ 重试仍非法 → 兜底 freeform gesture（不空拒）', async () => {
     const provider = new OpenAIProvider({
       apiKey: 'test',
       baseUrl: 'https://example.com/v1',
@@ -57,10 +57,11 @@ describe('OpenAIProvider（注入 fetch，零真实网络）', () => {
       fetchImpl: fakeFetch('build_irrigation', { provinceId: 'atlantis' }),
     });
     const r = await parseIntent('修水利', state, provider);
-    expect(r.kind).toBe('rejected'); // 重试仍非法 → 兜底拒绝
+    expect(r.kind).toBe('accepted');
+    if (r.kind === 'accepted') expect(r.decree?.params.category).toBe('gesture');
   });
 
-  it('HTTP 500 → 重试后兜底 rejected，不抛出', async () => {
+  it('HTTP 500 全程失败（无任何响应）→ 兜底 rejected，不抛出', async () => {
     const failing = (async () => new Response('boom', { status: 500 })) as unknown as typeof fetch;
     const provider = new OpenAIProvider({
       apiKey: 'test',

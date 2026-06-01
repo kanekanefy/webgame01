@@ -28,29 +28,27 @@ function rosterLine(state?: GameState): string {
 const SYSTEM = [
   '你是战国大名麾下的家老，把主公的口谕解析为「恰好一个」工具调用。时代：1560 年日本战国。',
   '',
+  '【铁则】你没有「拒绝」这个选项。无论主公的口谕多么笼统、私人、随意，你都必须把它映射到下列某一个动作——这是一个高自由度的角色扮演，万事皆可为，由你择最贴切者落地，再由叙事润色。',
+  '',
   '【精确政令——仅在口谕明确指向时使用，不可臆测】',
-  '· set_tax：仅当主公明确给出年贡/税率的数值或成数时（如「年贡三成」「税率提到五成」）。**严禁在未提及税率时使用 set_tax，也不要臆造税率数字。**',
+  '· set_tax：仅当主公明确给出年贡/税率的数值或成数（如「年贡三成」「税率提到五成」）。**未提及税率绝不可用 set_tax，更不可臆造税率数字。**',
   '· levy_troops：明确要征兵/募兵并给出兵数。',
   '· build_irrigation：明确要修水利/治水/开渠。',
   '· hold_festival：明确要办祭典/庙会。',
   '· reward_retainer：明确要赏赐/封赏某家臣。',
   '',
-  '【freeform_act——以上都不精确匹配时的默认选择，绝不要轻易拒绝】',
-  '只要是战国时代主公可亲为之事，一律 freeform_act 并选 category：',
-  '· 宴饮/喝酒/吃饭/饮宴/交谈/叙旧 → social（target 填相关家臣 id）',
-  '· 结婚/嫁娶/纳妃/联姻/狩猎/休养/读书/习武 → personal',
+  '【freeform_act——以上不精确匹配时一律用它，按 category 归类】',
+  '· 宴饮/喝酒/吃饭/交谈/叙旧/联络 → social（target 填相关家臣 id）',
+  '· 结婚/找老婆/嫁娶/纳妃/选妃/联姻/狩猎/休养/读书/习武 → personal',
   '· 茶会/品茗/连歌/俳句/能乐/赏花 → cultural',
   '· 参拜/祈愿/拜神/斋戒 → spiritual',
   '· 巡视/视察/巡查/体察民情 → inspect',
   '· 结盟/遣使/通好/讲和/结交邻国 → diplomacy（target 填相关邻国 id）',
-  '· 其余难以归类的合理之举 → gesture',
-  '',
-  '【拒绝——仅两种情形】',
-  '· 涉及非此时代之物（近现代器物/异世界概念）→ reject_intent(category=anachronism)',
-  '· 纯粹无意义、无法理解 → reject_intent(category=unclear)',
+  '· 招募人才/招揽浪人/求贤/纳士、以及其它一切难以归类的合理之举 → gesture',
   '',
   '【示例】',
-  '「我要结婚」→ freeform_act{category:"personal"}',
+  '「我要结婚」「找个老婆」「全天下选秀女」→ freeform_act{category:"personal"}',
+  '「招募人才」「广纳贤才」→ freeform_act{category:"gesture"}',
   '「巡视尾张领国」→ freeform_act{category:"inspect"}',
   '「和木下喝酒」→ freeform_act{category:"social", target:"<木下的id>"}',
   '「把年贡定到三成」→ set_tax{rate:0.3}',
@@ -132,12 +130,14 @@ export async function parseIntent(
     return { kind: 'rejected', reason: `时代不符：「${period.term}」非战国之物`, category: 'anachronism' };
   }
 
-  const tools = buildToolDefs(state);
+  // 不给 LLM reject_intent：逼它「无论多笼统都映射到一个动作」；拒绝只走上面的时代锁。
+  const tools = buildToolDefs(state, { allowReject: false });
   const baseMessages: ChatMessage[] = [
     { role: 'system', content: SYSTEM + (rosterLine(state) ? `\n${rosterLine(state)}` : '') },
     { role: 'user', content: command },
   ];
 
+  let sawResponse = false;
   for (let attempt = 0; attempt < 2; attempt++) {
     let call: ToolCall | undefined;
     try {
@@ -147,6 +147,7 @@ export async function parseIntent(
         maxTokens: 1500,
         temperature: 0,
       });
+      sawResponse = true;
       call = res.toolCalls[0];
     } catch {
       // 网络/解析异常 → 重试一次
@@ -191,5 +192,10 @@ export async function parseIntent(
     baseMessages.push({ role: 'system', content: '上次工具调用无效，请只用名册中的 id 重新选择一个合法工具。' });
   }
 
-  return { kind: 'rejected', reason: '未能将口谕解析为可执行政令', category: 'unclear' };
+  // 兜底：模型有响应但没给出可用动作 → 当作一桩率性之举（freeform gesture），绝不空拒。
+  if (sawResponse) {
+    return { kind: 'accepted', decree: { actionId: 'freeform_act', params: { category: 'gesture' } }, intent: '率性之举' };
+  }
+  // 纯网络/服务失败（无任何响应）→ 才回拒绝。
+  return { kind: 'rejected', reason: '一时难以决断，容后再议', category: 'unclear' };
 }
