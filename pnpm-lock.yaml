@@ -66,6 +66,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@sengoku/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@sengoku/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -85,6 +88,19 @@ importers:
       wrangler:
         specifier: ^4.20.0
         version: 4.95.0(@cloudflare/workers-types@4.20260531.1)
+
+  packages/ai:
+    dependencies:
+      '@sengoku/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)
 
   packages/core:
     devDependencies:

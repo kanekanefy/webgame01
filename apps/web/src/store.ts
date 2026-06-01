@@ -119,6 +119,7 @@ function applyTurn(set: SetFn, resp: import('./types').TurnResponse, command?: s
         intent: resp.intent,
         facts: report.actionFacts.map((f) => f.text),
         events: report.events.map((f) => f.text),
+        narrative: resp.narrative,
       },
       ...s.log,
     ],

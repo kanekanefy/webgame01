@@ -1,6 +1,7 @@
 import { listActionIds, type Decree, type GameState, type TurnReport } from '@sengoku/core';
+import { narrate } from '@sengoku/ai';
 import { GameSession } from './session.js';
-import { parseCommand, type ParseResult } from './ai.js';
+import { getProvider, parseCommand, type ParseResult } from './ai.js';
 
 export { GameSession };
 
@@ -75,11 +76,14 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
         return json({ error: 'invalid json body' }, 400);
       }
 
+      const provider = getProvider(env);
+
       // 自由文本下令（R2）：有 command 字段则先经意图解析 → decree。
       let parse: ParseResult | null = null;
       let decree: Decree | null;
       if (typeof body.command === 'string' && body.command.trim()) {
-        parse = await parseCommand(body.command.trim(), (await stub.getState()) ?? undefined, env);
+        const current = (await stub.getState()) as GameState | null;
+        parse = await parseCommand(body.command.trim(), current ?? undefined, provider);
         if (parse.kind === 'rejected') {
           // 时代锁/越权/无法解析：不推进回合，回拒绝叙事。
           return json({ rejected: true, reason: parse.reason, narrative: parse.narrative }, 200);
@@ -93,7 +97,18 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
 
       const result = (await stub.turn(decree)) as { report: TurnReport; state: GameState } | null;
       if (!result) return json({ error: 'game not found' }, 404);
-      return json({ report: result.report, state: result.state, intent: parse?.intent ?? null });
+
+      // Narrator：依 core 事实渲染叙事（永不改数）。Mock 走模板，真 LLM 走 minimax。
+      const intent = parse?.intent ?? (decree ? `颁布政令：${decree.actionId}` : '按兵不动');
+      const narrative = await narrate(provider, {
+        state: result.state,
+        intent,
+        facts: result.report.actionFacts.map((f) => f.text),
+        events: result.report.events.map((f) => f.text),
+        issue: result.report.issue,
+      });
+
+      return json({ report: result.report, state: result.state, intent: parse?.intent ?? null, narrative });
     }
   }
 
