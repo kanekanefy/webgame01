@@ -82,6 +82,33 @@ export function buildToolDefs(state?: GameState): ToolDef[] {
     {
       type: 'function',
       function: {
+        name: 'freeform_act',
+        description:
+          '通用「随心而为」。凡符合 1560 年战国、玩家可亲为之事（宴饮/交谈/狩猎/婚姻/茶会/连歌/能乐/参拜/祈愿/巡视领国/遣使邻国 等），当无更精确政令可选时，一律用此工具并选最贴切的 category。target 可选：social 填家臣 id、diplomacy 填邻国 id。',
+        parameters: {
+          type: 'object',
+          properties: {
+            category: {
+              type: 'string',
+              enum: ['social', 'cultural', 'spiritual', 'personal', 'inspect', 'diplomacy', 'gesture'],
+              description:
+                'social=宴饮交游(配家臣) · cultural=茶会/连歌/能乐 · spiritual=参拜祈愿 · personal=婚姻/狩猎/休养 · inspect=巡视领国 · diplomacy=遣使邻国(配邻国) · gesture=其他率性之举',
+            },
+            target: {
+              type: 'string',
+              description: '可选。social→家臣 id；diplomacy→邻国 id',
+              ...(provinceIds.length || retainerIds.length
+                ? { examples: [...retainerIds] }
+                : {}),
+            },
+          },
+          required: ['category'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
         name: 'reject_intent',
         description: '当主公的口谕无法解析为上述政令，或不合 1560 年战国时代时，调用此工具。',
         parameters: {

@@ -43,12 +43,11 @@ function pct(text: string): number | null {
 interface Roster {
   provinces: Array<{ id: string; name: string }>;
   retainers: Array<{ id: string; name: string }>;
+  rivals: Array<{ id: string; name: string }>;
 }
 
 function parseRoster(systemText: string): Roster {
-  const out: Roster = { provinces: [], retainers: [] };
-  const provLine = systemText.match(/provinces:([^\n|]*)/);
-  const retLine = systemText.match(/retainers:([^\n|]*)/);
+  const out: Roster = { provinces: [], retainers: [], rivals: [] };
   const parse = (s: string) =>
     s
       .split(',')
@@ -59,13 +58,30 @@ function parseRoster(systemText: string): Roster {
         return { id: (id ?? '').trim(), name: (name ?? '').trim() };
       })
       .filter((x) => x.id);
+  const provLine = systemText.match(/provinces:([^\n|]*)/);
+  const retLine = systemText.match(/retainers:([^\n|]*)/);
+  const rivLine = systemText.match(/rivals:([^\n|]*)/);
   if (provLine) out.provinces = parse(provLine[1]!);
   if (retLine) out.retainers = parse(retLine[1]!);
+  if (rivLine) out.rivals = parse(rivLine[1]!);
   return out;
 }
 
 function reject(reason: string, category = 'unclear'): ToolCall {
   return { name: 'reject_intent', arguments: { reason, category } };
+}
+
+/** 按姓名匹配：全名 / 姓(前2字) / 名(后2字) 任一出现在口谕中。 */
+function matchByName<T extends { id: string; name: string }>(
+  command: string,
+  list: T[],
+): T | undefined {
+  return list.find(
+    (x) =>
+      command.includes(x.name) ||
+      (x.name.length >= 2 && command.includes(x.name.slice(0, 2))) ||
+      (x.name.length >= 2 && command.includes(x.name.slice(-2))),
+  );
 }
 
 function parseToToolCall(command: string, systemText: string): ToolCall {
@@ -95,15 +111,45 @@ function parseToToolCall(command: string, systemText: string): ToolCall {
   }
 
   if (/(赏|封赏|犒赏|赐|嘉奖|奖赏)/.test(command)) {
-    const matched = roster.retainers.find(
-      (r) => command.includes(r.name) || (r.name.length >= 2 && command.includes(r.name.slice(-2))),
-    );
+    const matched = matchByName(command, roster.retainers);
     const retainerId = matched?.id ?? roster.retainers[0]?.id;
     if (retainerId) return { name: 'reward_retainer', arguments: { retainerId } };
     return reject('无可赏之家臣');
   }
 
-  return reject('未能领会主公之意');
+  // —— freeform_act：自由度兜底，几乎不拒 ——
+  const retainer = matchByName(command, roster.retainers);
+  const rival = matchByName(command, roster.rivals);
+
+  if (/(喝酒|饮酒|对饮|宴|酒|吃饭|用膳|聚餐|交谈|谈心|叙话|闲谈|同乐|联络感情)/.test(command)) {
+    return ff('social', retainer?.id);
+  }
+  if (/(结盟|遣使|通好|和睦|修好|结交|外交|讲和|议和)/.test(command)) {
+    return ff('diplomacy', rival?.id);
+  }
+  if (/(结婚|成亲|婚|纳妃|联姻|狩猎|打猎|围猎|休养|养病|读书|习武)/.test(command)) {
+    return ff('personal', undefined);
+  }
+  if (/(茶会|茶|连歌|俳句|能乐|歌会|赏花|咏|风雅|品茗)/.test(command)) {
+    return ff('cultural', undefined);
+  }
+  if (/(参拜|祈愿|拜神|神社|寺|祈祷|祷告|斋戒)/.test(command)) {
+    return ff('spiritual', undefined);
+  }
+  if (/(巡视|视察|巡查|巡行|巡|查看领国|体察民情)/.test(command)) {
+    return ff('inspect', undefined);
+  }
+
+  // 兜底：当作一桩率性之举（不拒绝——时代不符已由 period-lock 上游拦截）。
+  if (retainer) return ff('social', retainer.id);
+  if (rival) return ff('diplomacy', rival.id);
+  return ff('gesture', undefined);
+}
+
+function ff(category: string, target?: string): ToolCall {
+  const args: Record<string, unknown> = { category };
+  if (target) args.target = target;
+  return { name: 'freeform_act', arguments: args };
 }
 
 const NARRATIVE_POOL = [

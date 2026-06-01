@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildState } from '@sengoku/core';
 import scenario from '@sengoku/core/content/scenario.json';
 import { MockProvider, parseIntent, narrate } from '../index.js';
+import { cleanNarrative } from '../src/narrator.js';
 
 const state = buildState(scenario as never);
 const mock = new MockProvider();
@@ -61,7 +62,49 @@ describe('IntentParser × MockProvider — 已知短语 → 已知动作', () =>
   });
 });
 
-describe('时代锁 & 无法解析 → rejected', () => {
+describe('自由度：随心而为 → freeform_act（不再轻易驳回）', () => {
+  it('和木下喝酒 → freeform social，target=hideyoshi', async () => {
+    const r = await parseIntent('和木下喝酒', state, mock);
+    expect(r.kind).toBe('accepted');
+    if (r.kind === 'accepted') {
+      expect(r.decree?.actionId).toBe('freeform_act');
+      expect(r.decree?.params.category).toBe('social');
+      expect(r.decree?.params.target).toBe('hideyoshi');
+    }
+  });
+
+  it('结婚 → freeform personal', async () => {
+    const r = await parseIntent('我要结婚', state, mock);
+    expect(r.kind === 'accepted' && r.decree?.params.category).toBe('personal');
+  });
+
+  it('去神社参拜祈愿 → freeform spiritual', async () => {
+    const r = await parseIntent('去神社参拜祈愿', state, mock);
+    expect(r.kind === 'accepted' && r.decree?.params.category).toBe('spiritual');
+  });
+
+  it('和今川结盟 → freeform diplomacy，target=imagawa', async () => {
+    const r = await parseIntent('派人和今川结盟通好', state, mock);
+    expect(r.kind).toBe('accepted');
+    if (r.kind === 'accepted') {
+      expect(r.decree?.params.category).toBe('diplomacy');
+      expect(r.decree?.params.target).toBe('imagawa');
+    }
+  });
+
+  it('开个茶会 → freeform cultural', async () => {
+    const r = await parseIntent('开个茶会请家臣品茗', state, mock);
+    expect(r.kind === 'accepted' && r.decree?.params.category).toBe('cultural');
+  });
+
+  it('模糊口令也兜底为 gesture（不驳回）', async () => {
+    const r = await parseIntent('随便走走看看', state, mock);
+    expect(r.kind).toBe('accepted');
+    if (r.kind === 'accepted') expect(r.decree?.actionId).toBe('freeform_act');
+  });
+});
+
+describe('时代锁 → rejected（仅拦真正越界）', () => {
   it('电报 → rejected anachronism（时代锁，零 LLM 调用）', async () => {
     const r = await parseIntent('给所有家臣发电报', state, mock);
     expect(r.kind).toBe('rejected');
@@ -72,12 +115,6 @@ describe('时代锁 & 无法解析 → rejected', () => {
     const r = await parseIntent('造一辆坦克', state, mock);
     expect(r.kind === 'rejected' && r.category).toBe('anachronism');
   });
-
-  it('无意义口令 → rejected unclear', async () => {
-    const r = await parseIntent('呜啦啦啦啦', state, mock);
-    expect(r.kind).toBe('rejected');
-    if (r.kind === 'rejected') expect(r.category).toBe('unclear');
-  });
 });
 
 describe('Narrator × MockProvider', () => {
@@ -87,5 +124,27 @@ describe('Narrator × MockProvider', () => {
     const b = await narrate(mock, input);
     expect(a.length).toBeGreaterThan(0);
     expect(a).toBe(b);
+  });
+});
+
+describe('cleanNarrative — 防推理模型思维链泄漏', () => {
+  it('干净单句 → 原样保留', () => {
+    expect(cleanNarrative('炎夏议堂，众臣默然，暗流涌动。')).toBe('炎夏议堂，众臣默然，暗流涌动。');
+  });
+  it('思维链泄漏 → 抽取引号内最终句', () => {
+    const leak = '用户要求我扮演家臣。考虑情境：盛夏。尝试写：「盛夏议堂，主公定音，众臣默然，暗流涌动。」';
+    expect(cleanNarrative(leak)).toBe('盛夏议堂，主公定音，众臣默然，暗流涌动。');
+  });
+  it('纯思维链无可用引用 → null（调用方走模板）', () => {
+    expect(cleanNarrative('用户要求我考虑这个表述，我需要再想想或者用别的词')).toBeNull();
+  });
+  it('多行 → 取末行', () => {
+    expect(cleanNarrative('思考...\n\n秋风萧瑟，堂上肃然。')).toBe('秋风萧瑟，堂上肃然。');
+  });
+  it('去引号包裹', () => {
+    expect(cleanNarrative('「冬炉围坐，主公叙旧。」')).toBe('冬炉围坐，主公叙旧。');
+  });
+  it('超长 → null', () => {
+    expect(cleanNarrative('啊'.repeat(80))).toBeNull();
   });
 });

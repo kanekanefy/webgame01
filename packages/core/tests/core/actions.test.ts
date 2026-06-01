@@ -44,7 +44,7 @@ beforeAll(async () => {
 describe('action catalog', () => {
   it('注册了全部 MVP 动作', () => {
     expect(listActionIds().sort()).toEqual(
-      ['build_irrigation', 'hold_festival', 'levy_troops', 'reward_retainer', 'set_tax'].sort(),
+      ['build_irrigation', 'freeform_act', 'hold_festival', 'levy_troops', 'reward_retainer', 'set_tax'].sort(),
     );
   });
 

@@ -21,15 +21,54 @@ function rosterLine(state?: GameState): string {
   if (!state) return '';
   const prov = state.provinces.map((p) => `${p.id}=${p.name}`).join(',');
   const ret = state.retainers.map((r) => `${r.id}=${r.name}`).join(',');
-  return `名册|provinces:${prov}|retainers:${ret}`;
+  const riv = state.rivals.map((c) => `${c.id}=${c.name}`).join(',');
+  return `名册|provinces:${prov}|retainers:${ret}|rivals:${riv}`;
 }
 
 const SYSTEM = [
-  '你是战国大名麾下的家老，职责是把主公的口谕解析为「恰好一个」政令工具调用。',
-  '时代设定：1560 年（永禄三年）日本战国。凡不属于该时代之物（近现代器物、异世界概念等），调用 reject_intent 且 category=anachronism。',
-  '若口谕含糊无法确定政令，调用 reject_intent 且 category=unclear。',
-  '只能调用所提供的工具，不要臆造参数；provinceId/retainerId 必须取自名册中的 id。',
+  '你是战国大名麾下的家老，把主公的口谕解析为「恰好一个」工具调用。时代：1560 年日本战国。',
+  '',
+  '【精确政令——仅在口谕明确指向时使用，不可臆测】',
+  '· set_tax：仅当主公明确给出年贡/税率的数值或成数时（如「年贡三成」「税率提到五成」）。**严禁在未提及税率时使用 set_tax，也不要臆造税率数字。**',
+  '· levy_troops：明确要征兵/募兵并给出兵数。',
+  '· build_irrigation：明确要修水利/治水/开渠。',
+  '· hold_festival：明确要办祭典/庙会。',
+  '· reward_retainer：明确要赏赐/封赏某家臣。',
+  '',
+  '【freeform_act——以上都不精确匹配时的默认选择，绝不要轻易拒绝】',
+  '只要是战国时代主公可亲为之事，一律 freeform_act 并选 category：',
+  '· 宴饮/喝酒/吃饭/饮宴/交谈/叙旧 → social（target 填相关家臣 id）',
+  '· 结婚/嫁娶/纳妃/联姻/狩猎/休养/读书/习武 → personal',
+  '· 茶会/品茗/连歌/俳句/能乐/赏花 → cultural',
+  '· 参拜/祈愿/拜神/斋戒 → spiritual',
+  '· 巡视/视察/巡查/体察民情 → inspect',
+  '· 结盟/遣使/通好/讲和/结交邻国 → diplomacy（target 填相关邻国 id）',
+  '· 其余难以归类的合理之举 → gesture',
+  '',
+  '【拒绝——仅两种情形】',
+  '· 涉及非此时代之物（近现代器物/异世界概念）→ reject_intent(category=anachronism)',
+  '· 纯粹无意义、无法理解 → reject_intent(category=unclear)',
+  '',
+  '【示例】',
+  '「我要结婚」→ freeform_act{category:"personal"}',
+  '「巡视尾张领国」→ freeform_act{category:"inspect"}',
+  '「和木下喝酒」→ freeform_act{category:"social", target:"<木下的id>"}',
+  '「把年贡定到三成」→ set_tax{rate:0.3}',
+  '「去神社祈愿」→ freeform_act{category:"spiritual"}',
+  '',
+  'provinceId/retainerId/target 必须取自名册中的 id。',
 ].join('\n');
+
+const FREEFORM_CATS = new Set(['social', 'cultural', 'spiritual', 'personal', 'inspect', 'diplomacy', 'gesture']);
+const FREEFORM_LABEL: Record<string, string> = {
+  social: '宴饮交游',
+  cultural: '风雅之事',
+  spiritual: '祈愿参拜',
+  personal: '私事一桩',
+  inspect: '巡视领国',
+  diplomacy: '遣使结交',
+  gesture: '率性之举',
+};
 
 /** 把工具调用映射并校验为 core 可执行 Decree。 */
 function toDecree(call: ToolCall, state?: GameState): Decree | null | 'invalid' {
@@ -121,6 +160,23 @@ export async function parseIntent(
         kind: 'rejected',
         reason: String(call.arguments.reason ?? '无法奉行'),
         category: cat === 'anachronism' || cat === 'impossible' ? cat : 'unclear',
+      };
+    }
+
+    if (call.name === 'freeform_act') {
+      const category = FREEFORM_CATS.has(String(call.arguments.category))
+        ? String(call.arguments.category)
+        : 'gesture';
+      const target = call.arguments.target ? String(call.arguments.target) : undefined;
+      const tName =
+        state?.retainers.find((r) => r.id === target)?.name ??
+        state?.rivals.find((c) => c.id === target)?.name;
+      const params: Record<string, unknown> = { category };
+      if (target) params.target = target;
+      return {
+        kind: 'accepted',
+        decree: { actionId: 'freeform_act', params },
+        intent: `${FREEFORM_LABEL[category]}${tName ? `·${tName}` : ''}`,
       };
     }
 

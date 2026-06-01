@@ -100,9 +100,11 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
 
       // Narrator：依 core 事实渲染叙事（永不改数）。Mock 走模板，真 LLM 走 minimax。
       const intent = parse?.intent ?? (decree ? `颁布政令：${decree.actionId}` : '按兵不动');
+      const playerCommand = typeof body.command === 'string' ? body.command.trim() : undefined;
       const narrative = await narrate(provider, {
         state: result.state,
         intent,
+        command: playerCommand,
         facts: result.report.actionFacts.map((f) => f.text),
         events: result.report.events.map((f) => f.text),
         issue: result.report.issue,
