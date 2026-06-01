@@ -141,19 +141,24 @@ specialist to spawn via Task.
 **Config/Data stories — skip agent spawning entirely:**
 If the story's Type is `Config/Data`, no programmer agent or engine specialist is needed. Jump directly to Phase 4 (Config/Data note). The implementation is a data file edit — no routing table evaluation, no engine specialist.
 
-### Primary agent routing table
+### Primary agent routing table (web stack — current)
+
+Route by the story's target path / layer / type:
 
 | Story context | Primary agent |
 |---|---|
-| Foundation layer — any type | `engine-programmer` |
-| Any layer — Type: UI | `ui-programmer` |
-| Any layer — Type: Visual/Feel | `gameplay-programmer` (implements) |
-| Core or Feature — gameplay mechanics | `gameplay-programmer` |
-| Core or Feature — AI behaviour, pathfinding | `ai-programmer` |
-| Core or Feature — networking, replication | `network-programmer` |
+| `packages/core/**` — numeric core, economy, turn loop, action catalog | `game-balance-engineer` |
+| `apps/web/**` or Type: UI — React panels, free-text input, streaming render | `frontend-engineer` |
+| `apps/worker/**` — Worker API, GameSession DO, LLM proxy | `backend-engineer` |
+| `packages/ai/**` — Provider, IntentParser, Narrator, period-lock | `narrative-systems-engineer` |
+| Deployment / wrangler / CI | `cloudflare-devops` |
 | Config/Data — no code | No agent needed (see Phase 4 Config note) |
 
-### Engine specialist — always spawn as secondary for code stories
+> **Engine routing dormant:** the legacy rows (Foundation→`engine-programmer`, `gameplay-programmer`, `ai-programmer`, `network-programmer`) apply only when `technical-preferences.md` `Engine:` is set to Godot/Unity/UE. Current stack is Web — those agents are retained but not routed to.
+
+### Engine specialist — dormant under the web stack
+
+**Current stack is Web (see `technical-preferences.md`). No engine specialist is spawned.** The block below applies only when `Engine:` is set to Godot/Unity/UE; those specialist agents are retained for that future but not routed to now.
 
 Read the `Engine Specialists` section of `.claude/docs/technical-preferences.md`
 to get the configured primary specialist. Spawn them alongside the primary agent

@@ -279,3 +279,18 @@ When the art bible or asset standards change, the art-director must notify:
 5. **Assumption-based implementation**: If a spec is ambiguous, the implementer
    must ask the specifier rather than guessing. Wrong guesses are more expensive
    than a question.
+
+## Web 栈角色映射（当前生效）
+
+当前技术栈为 Web（见 `.claude/docs/technical-preferences.md`）。开发执行层由以下 web 角色承担；引擎执行层（`engine-programmer`、`network-programmer`、全部 `godot-*`/`unity-*`/`ue-*` specialist、`technical-artist`、`sound-designer`、`level-designer`、`tools-programmer`）**休眠保留**，不参与 web 路由，待将来启用 Godot/手游栈时复活。
+
+| 领域 | Web 角色 | 报告对象 |
+|------|---------|---------|
+| `packages/core` 数值核心 | `game-balance-engineer` | lead-programmer |
+| `apps/web` React 前端 | `frontend-engineer` | lead-programmer |
+| `apps/worker` CF Worker / DO | `backend-engineer` | lead-programmer |
+| `packages/ai` LLM 管线 | `narrative-systems-engineer` | narrative-director + lead-programmer |
+| Cloudflare 部署 / CI | `cloudflare-devops` | technical-director |
+| web 测试（E2E / Web Vitals / vitest 双池） | `web-qa` | qa-lead |
+
+治理层（directors、`producer`、`game-designer`/`economy-designer`/`systems-designer`、`narrative-director`、`writer`、`world-builder`、`qa-lead`、`ux-designer`、`accessibility-specialist`、`analytics-engineer` 等）与引擎无关，原样沿用。
