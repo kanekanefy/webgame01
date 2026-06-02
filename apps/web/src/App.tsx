@@ -6,13 +6,15 @@ import { CommandBox } from './components/CommandBox';
 import { ReportLog } from './components/ReportLog';
 import { RivalsPanel, RetainersPanel } from './components/WorldPanels';
 import { EndingBanner } from './components/EndingBanner';
-import { playSfx, startAmbient, toggleMute, isMuted, unlockAudio } from './useAudio';
+import { playSfx, setBgm, startBgm, toggleMute, isMuted, unlockAudio } from './useAudio';
+import { eventSfxForKinds } from './eventSfx';
 import type { Decree } from './types';
 
 export default function App() {
   const { state, gameId, loading, error, newGame, advance, command } = useGame();
   const rejection = useGame((s) => s.rejection);
   const lastReport = useGame((s) => s.lastReport);
+  const log = useGame((s) => s.log);
   const playing = state?.status === 'playing';
   const busy = loading || !playing;
   const [muted, setMuted] = useState(isMuted());
@@ -22,6 +24,25 @@ export default function App() {
   useEffect(() => {
     if (rejection) playSfx('reject');
   }, [rejection]);
+
+  // 每回合结算：按最新一条评定的事件 kind 播放对应音效，无则默认推进鼓。
+  useEffect(() => {
+    if (!lastReport) return;
+    const sfx = eventSfxForKinds(log[0]?.kinds ?? []) ?? 'advance';
+    playSfx(sfx);
+  }, [lastReport]);
+
+  // BGM：进入战时（任一邻国交战中）切战阵乐，否则治世乐。
+  useEffect(() => {
+    if (!state) return;
+    if (state.status !== 'playing') {
+      setBgm(null); // 结局静乐，突出胜/败音
+      return;
+    }
+    const atWar = state.rivals.some((r) => r.atWar && r.strength > 0);
+    setBgm(atWar ? 'bgm-war' : 'bgm-peace');
+  }, [state?.status, state?.rivals]);
+
   useEffect(() => {
     if (state?.status === 'won') playSfx('victory');
     else if (state?.status === 'lost') playSfx('defeat');
@@ -29,15 +50,14 @@ export default function App() {
 
   function unlock() {
     unlockAudio();
-    startAmbient();
+    startBgm();
   }
 
+  // 不在此即时播音——回合结算后由 lastReport effect 按事件类型放对应音效。
   function handleAdvance(d: Decree | null) {
-    playSfx('advance');
     advance(d);
   }
   function handleCommand(t: string) {
-    playSfx('advance');
     command(t);
   }
   function handleNewGame() {

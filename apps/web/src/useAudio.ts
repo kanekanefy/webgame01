@@ -1,164 +1,171 @@
 /**
- * useAudio.ts — 「战国大名 AI 模拟器」前端音频管理器（纯 TS，原生 Audio，无第三方依赖）。
+ * useAudio.ts — 前端音频管理器（纯 TS，原生 Audio，无第三方依赖）。
  *
- * 提供一个模块级单例，负责 UI 音效与环境音的预加载、播放、静音持久化，
- * 并遵守浏览器自动播放策略（音频必须在首次用户手势后才能播）。
+ * 模块级单例：负责事件音效(SFX) + 背景音乐(BGM) 的预加载、播放、静音持久化，
+ * 遵守浏览器自动播放策略（首次用户手势后才能放声）。
+ * 资源位于 apps/web/public/audio/*.mp3，运行时以 `/audio/<name>.mp3` 引用。
  *
- * 音频资源位于 apps/web/public/audio/*.mp3，运行时以 `/audio/<name>.mp3` 引用。
+ * SFX：一次性短音（事件/动作反馈），名即文件名（stem）。
+ * BGM：可切换循环曲（bgm-peace 治世 / bgm-war 战时），单声道槽位，切换即换源。
  *
- * ── 导出 API ──────────────────────────────────────────────
- *   playSfx(name: SfxName): void      播放一次性 UI 音效
- *   startAmbient(): void              开始/恢复循环环境音（需先 unlock）
- *   stopAmbient(): void               停止环境音
- *   toggleMute(): boolean             切换静音，返回切换后的 isMuted
- *   isMuted(): boolean                当前是否静音
- *   unlockAudio(): void               在首次用户手势里调用一次，解锁自动播放
- *   preloadAudio(): void              预加载所有音频（可选，构造时已自动预加载）
- *
- * ── 用法示例 ──────────────────────────────────────────────
- *   import { playSfx, startAmbient, toggleMute, isMuted, unlockAudio } from "./useAudio";
- *
- *   // 1) 在最外层容器的首次点击里解锁 + 起环境音（只需一次）
- *   <div onPointerDownCapture={() => { unlockAudio(); startAmbient(); }}>
- *
- *   // 2) 各动作触发音效
- *   <button onClick={() => { playSfx("click"); doSomething(); }}>下令</button>
- *   onAdvanceTurn  -> playSfx("advance")
- *   onResourceChange -> playSfx("coin")
- *   onEdictRejected  -> playSfx("reject")
- *
- *   // 3) 结局
- *   if (result === "win")  playSfx("victory");
- *   if (result === "lose") playSfx("defeat");
- *
- *   // 4) 静音按钮
- *   <button onClick={() => setMuted(toggleMute())}>{isMuted() ? "🔇" : "🔊"}</button>
+ * 导出：
+ *   playSfx(name)        播放一次性音效
+ *   setBgm(track|null)   切换/停止背景音乐（null=停）
+ *   startBgm()           起默认治世 BGM（= setBgm('bgm-peace')）
+ *   toggleMute()/isMuted()  静音开关（持久化）
+ *   unlockAudio()        首次用户手势里调用一次以解锁
  */
 
 export type SfxName =
-  | "click"
-  | "advance"
-  | "coin"
-  | "reject"
-  | "victory"
-  | "defeat";
+  // 基础反馈
+  | 'click'
+  | 'advance'
+  | 'coin'
+  | 'reject'
+  | 'victory'
+  | 'defeat'
+  // R4 事件音效
+  | 'triumph'
+  | 'defeat-low'
+  | 'battle'
+  | 'betrayal'
+  | 'recruit'
+  | 'court'
+  | 'omen'
+  | 'disaster'
+  | 'ikki'
+  | 'festival'
+  | 'build';
 
-const AMBIENT_NAME = "ambient" as const;
-const AUDIO_BASE = "/audio";
-const STORAGE_KEY = "sengoku.audio.muted";
-const AMBIENT_VOLUME = 0.35;
+export type BgmTrack = 'bgm-peace' | 'bgm-war';
+
+const AUDIO_BASE = '/audio';
+const STORAGE_KEY = 'sengoku.audio.muted';
+const BGM_VOLUME = 0.3;
 const SFX_VOLUME = 0.8;
 
 const SFX_NAMES: SfxName[] = [
-  "click",
-  "advance",
-  "coin",
-  "reject",
-  "victory",
-  "defeat",
+  'click',
+  'advance',
+  'coin',
+  'reject',
+  'victory',
+  'defeat',
+  'triumph',
+  'defeat-low',
+  'battle',
+  'betrayal',
+  'recruit',
+  'court',
+  'omen',
+  'disaster',
+  'ikki',
+  'festival',
+  'build',
 ];
 
 class AudioManager {
-  /** 每个 SFX 的模板元素，play 时 clone 以支持重叠播放 */
   private sfx = new Map<SfxName, HTMLAudioElement>();
-  private ambient: HTMLAudioElement | null = null;
+  private bgm: HTMLAudioElement | null = null;
+  private bgmTrack: BgmTrack | null = null;
+  private pendingBgm: BgmTrack | null = null;
   private muted = false;
-  /** 用户手势解锁前禁止 play()，避免浏览器报错 */
   private unlocked = false;
-  /** 解锁时若曾请求过环境音，则补播 */
-  private ambientRequested = false;
   private preloaded = false;
 
   constructor() {
-    this.muted = this.readMutedFromStorage();
+    this.muted = this.readMuted();
   }
 
   private isBrowser(): boolean {
-    return typeof window !== "undefined" && typeof Audio !== "undefined";
+    return typeof window !== 'undefined' && typeof Audio !== 'undefined';
   }
-
-  private readMutedFromStorage(): boolean {
-    if (typeof localStorage === "undefined") return false;
+  private readMuted(): boolean {
+    if (typeof localStorage === 'undefined') return false;
     try {
-      return localStorage.getItem(STORAGE_KEY) === "1";
+      return localStorage.getItem(STORAGE_KEY) === '1';
     } catch {
       return false;
     }
   }
-
-  private writeMutedToStorage(value: boolean): void {
-    if (typeof localStorage === "undefined") return;
+  private writeMuted(v: boolean): void {
+    if (typeof localStorage === 'undefined') return;
     try {
-      localStorage.setItem(STORAGE_KEY, value ? "1" : "0");
+      localStorage.setItem(STORAGE_KEY, v ? '1' : '0');
     } catch {
-      /* 隐私模式等：忽略 */
+      /* 隐私模式忽略 */
     }
   }
 
   preload(): void {
     if (!this.isBrowser() || this.preloaded) return;
     this.preloaded = true;
-
     for (const name of SFX_NAMES) {
       const el = new Audio(`${AUDIO_BASE}/${name}.mp3`);
-      el.preload = "auto";
+      el.preload = 'auto';
       el.volume = SFX_VOLUME;
       this.sfx.set(name, el);
     }
-
-    const amb = new Audio(`${AUDIO_BASE}/${AMBIENT_NAME}.mp3`);
-    amb.preload = "auto";
-    amb.loop = true;
-    amb.volume = AMBIENT_VOLUME;
-    this.ambient = amb;
+    this.bgm = new Audio();
+    this.bgm.loop = true;
+    this.bgm.volume = BGM_VOLUME;
   }
 
-  /** 必须在首个用户手势（点击/触摸）回调里调用一次 */
+  /** 首个用户手势里调用一次。 */
   unlock(): void {
     if (!this.isBrowser()) return;
     this.preload();
     if (this.unlocked) return;
     this.unlocked = true;
-    if (this.ambientRequested) this.startAmbient();
+    if (this.pendingBgm) this.setBgm(this.pendingBgm);
   }
 
   playSfx(name: SfxName): void {
     if (!this.isBrowser() || this.muted || !this.unlocked) return;
     this.preload();
-    const template = this.sfx.get(name);
-    if (!template) return;
-    // clone 以支持快速连续/重叠播放，互不打断
-    const node = template.cloneNode(true) as HTMLAudioElement;
+    const tmpl = this.sfx.get(name);
+    if (!tmpl) return;
+    const node = tmpl.cloneNode(true) as HTMLAudioElement; // clone 支持重叠
     node.volume = SFX_VOLUME;
-    void node.play().catch(() => {
-      /* 自动播放被拒等：静默忽略 */
-    });
+    void node.play().catch(() => {});
   }
 
-  startAmbient(): void {
+  /** 切换背景音乐；null = 停止。未解锁时记为 pending。 */
+  setBgm(track: BgmTrack | null): void {
     if (!this.isBrowser()) return;
-    this.ambientRequested = true;
     this.preload();
-    if (!this.unlocked || this.muted || !this.ambient) return;
-    void this.ambient.play().catch(() => {
-      /* 等待下一次手势 */
-    });
+    if (track === null) {
+      this.bgmTrack = null;
+      this.pendingBgm = null;
+      if (this.bgm) this.bgm.pause();
+      return;
+    }
+    if (!this.unlocked) {
+      this.pendingBgm = track;
+      return;
+    }
+    if (this.bgmTrack === track && this.bgm && !this.bgm.paused) return;
+    this.bgmTrack = track;
+    this.pendingBgm = track;
+    if (!this.bgm) return;
+    if (this.bgm.src.indexOf(`${track}.mp3`) === -1) {
+      this.bgm.src = `${AUDIO_BASE}/${track}.mp3`;
+    }
+    if (this.muted) return;
+    void this.bgm.play().catch(() => {});
   }
 
-  stopAmbient(): void {
-    this.ambientRequested = false;
-    if (!this.ambient) return;
-    this.ambient.pause();
-    this.ambient.currentTime = 0;
+  startBgm(): void {
+    this.setBgm('bgm-peace');
   }
 
   toggleMute(): boolean {
     this.muted = !this.muted;
-    this.writeMutedToStorage(this.muted);
+    this.writeMuted(this.muted);
     if (this.muted) {
-      if (this.ambient) this.ambient.pause();
-    } else if (this.ambientRequested) {
-      this.startAmbient();
+      if (this.bgm) this.bgm.pause();
+    } else if (this.bgmTrack) {
+      void this.bgm?.play().catch(() => {});
     }
     return this.muted;
   }
@@ -171,9 +178,8 @@ class AudioManager {
 const manager = new AudioManager();
 
 export const playSfx = (name: SfxName): void => manager.playSfx(name);
-export const startAmbient = (): void => manager.startAmbient();
-export const stopAmbient = (): void => manager.stopAmbient();
+export const setBgm = (track: BgmTrack | null): void => manager.setBgm(track);
+export const startBgm = (): void => manager.startBgm();
 export const toggleMute = (): boolean => manager.toggleMute();
 export const isMuted = (): boolean => manager.isMuted();
 export const unlockAudio = (): void => manager.unlock();
-export const preloadAudio = (): void => manager.preload();
