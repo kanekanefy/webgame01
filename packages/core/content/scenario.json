@@ -19,6 +19,15 @@
   "rivals": [
     { "id": "imagawa", "name": "今川", "strength": 450, "disposition": 0.15 },
     { "id": "saito", "name": "斎藤", "strength": 220, "disposition": 0.3 },
-    { "id": "asai", "name": "浅井", "strength": 180, "disposition": 0.45 }
+    { "id": "asai", "name": "浅井", "strength": 180, "disposition": 0.45 },
+    { "id": "rokkaku", "name": "六角", "strength": 200, "disposition": 0.4 }
+  ],
+  "daimyoAge": 26,
+  "fame": 0.3,
+  "roninPool": [
+    { "id": "hanbei", "name": "竹中半兵衛", "loyalty": 0.5, "ambition": 0.4, "skillAdmin": 0.9, "skillWar": 0.7, "traits": ["军师", "智谋"], "role": "牢人" },
+    { "id": "ittetsu", "name": "稲葉一鉄", "loyalty": 0.45, "ambition": 0.55, "skillAdmin": 0.6, "skillWar": 0.75, "traits": ["美浓三人众"], "role": "牢人" },
+    { "id": "koroku", "name": "蜂須賀小六", "loyalty": 0.5, "ambition": 0.5, "skillAdmin": 0.55, "skillWar": 0.7, "traits": ["野伏", "豪胆"], "role": "牢人" },
+    { "id": "nagayoshi", "name": "森長可", "loyalty": 0.5, "ambition": 0.7, "skillAdmin": 0.4, "skillWar": 0.85, "traits": ["鬼武蔵", "勇猛"], "role": "牢人" }
   ]
 }

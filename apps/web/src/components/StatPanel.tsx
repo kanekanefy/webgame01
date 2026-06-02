@@ -67,7 +67,9 @@ export function StatPanel({ state }: { state: GameState }) {
       <Stat label="兵力" value={clan.levy} suffix="众" testid="stat-levy" />
       <Stat label="民心" value={clan.contentment.toFixed(2)} testid="stat-contentment" bar={clan.contentment} />
       <Stat label="威信" value={clan.prestige.toFixed(2)} testid="stat-prestige" bar={clan.prestige} />
-      <Stat label="目标" value={`撑至 ${state.goalYear} 年`} testid="stat-goal" />
+      <Stat label="名声" value={(state.fame ?? 0).toFixed(2)} testid="stat-fame" bar={state.fame ?? 0} />
+      <Stat label="官位" value={state.courtRank ?? 0} suffix="位" testid="stat-court" />
+      <Stat label="家督" value={state.daimyoAge ?? 0} suffix="岁" testid="stat-age" />
       <Stat label="局势" value={STATUS_CN[state.status] ?? state.status} testid="stat-status" />
     </section>
   );

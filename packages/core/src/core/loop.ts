@@ -2,6 +2,7 @@ import type { GameState, Season } from './state.js';
 import { RNG } from './rng.js';
 import { runUpkeep, updateContentment, type UpkeepReport } from './economy.js';
 import { resolveAction, type OutcomeFact, type ActionContext } from './actions/types.js';
+import { runWorldEvents, updatePopulation } from './events.js';
 import './actions/index.js'; // 触发动作注册（副作用导入）
 
 export interface Decree {
@@ -29,20 +30,14 @@ function pickIssue(rng: RNG): string {
   return ISSUES[rng.int(0, ISSUES.length - 1)]!;
 }
 
-function runEvents(state: GameState, rng: RNG): OutcomeFact[] {
-  const facts: OutcomeFact[] = [];
-  if (state.clan.contentment < 0.25 && rng.next() < 0.5) {
-    state.clan.levy = Math.max(0, state.clan.levy - 10);
-    facts.push({ kind: 'ikki', text: '一揆四起，损兵十' });
-  }
-  return facts;
-}
-
+// 日历推进；跨年（Winter→Spring）时结算人口繁衍/流散与家督年岁。
 function advanceCalendar(state: GameState): void {
   const idx = SEASONS.indexOf(state.season);
   if (idx === SEASONS.length - 1) {
     state.season = 'Spring';
     state.year += 1;
+    updatePopulation(state);
+    state.daimyoAge += 1;
   } else {
     state.season = SEASONS[idx + 1]!;
   }
@@ -93,7 +88,7 @@ export function advanceTurn(state: GameState, decree: Decree | null): TurnReport
     state.actionLog.push({ turn: state.turn, actionId: decree.actionId, params: decree.params });
     actionFacts = res.facts;
   }
-  const events = runEvents(state, rng);
+  const events = runWorldEvents(state, rng);
   advanceCalendar(state);
   checkWinLose(state);
   state.rngState = rng.getState();

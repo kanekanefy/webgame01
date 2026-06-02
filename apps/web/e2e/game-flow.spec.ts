@@ -51,6 +51,26 @@ test.describe('R1 数值闭环关键路径', () => {
   });
 });
 
+test.describe('R4 世界面板', () => {
+  test('E2E-07: 新建对局显示邻国/家臣面板与新数值', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('new-game-btn').click();
+    await expect(page.getByTestId('rivals-panel')).toBeVisible();
+    await expect(page.getByTestId('retainers-panel')).toBeVisible();
+    await expect(page.getByTestId('rival-imagawa')).toContainText('今川');
+    await expect(page.getByTestId('stat-fame')).toBeVisible();
+    await expect(page.getByTestId('stat-court')).toBeVisible();
+  });
+
+  test('E2E-08: 自由文本「任命柴田勝家领军」→ 家臣面板显示领军', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('new-game-btn').click();
+    await page.getByTestId('command-input').fill('任命柴田勝家领军');
+    await page.getByTestId('command-submit').click();
+    await expect(page.getByTestId('retainer-katsuie')).toContainText('领军');
+  });
+});
+
 test.describe('移动端冒烟', () => {
   test('E2E-06: 375px 关键元素可见无溢出', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });

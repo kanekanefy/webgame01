@@ -83,12 +83,12 @@ describe('自由度：随心而为 → freeform_act（不再轻易驳回）', ()
     expect(r.kind === 'accepted' && r.decree?.params.category).toBe('spiritual');
   });
 
-  it('和今川结盟 → freeform diplomacy，target=imagawa', async () => {
+  it('和今川结盟通好 → negotiate imagawa（升级为显式外交动作）', async () => {
     const r = await parseIntent('派人和今川结盟通好', state, mock);
     expect(r.kind).toBe('accepted');
     if (r.kind === 'accepted') {
-      expect(r.decree?.params.category).toBe('diplomacy');
-      expect(r.decree?.params.target).toBe('imagawa');
+      expect(r.decree?.actionId).toBe('negotiate');
+      expect(r.decree?.params.rivalId).toBe('imagawa');
     }
   });
 
@@ -101,6 +101,44 @@ describe('自由度：随心而为 → freeform_act（不再轻易驳回）', ()
     const r = await parseIntent('随便走走看看', state, mock);
     expect(r.kind).toBe('accepted');
     if (r.kind === 'accepted') expect(r.decree?.actionId).toBe('freeform_act');
+  });
+});
+
+describe('R4 新动作意图解析（× MockProvider）', () => {
+  it('进攻今川 → attack_rival imagawa', async () => {
+    const r = await parseIntent('出兵进攻今川', state, mock);
+    expect(r.kind).toBe('accepted');
+    if (r.kind === 'accepted') {
+      expect(r.decree?.actionId).toBe('attack_rival');
+      expect(r.decree?.params.rivalId).toBe('imagawa');
+    }
+  });
+  it('和斎藤议和 → negotiate saito', async () => {
+    const r = await parseIntent('遣使与斎藤议和通好', state, mock);
+    expect(r.kind === 'accepted' && r.decree?.actionId).toBe('negotiate');
+    if (r.kind === 'accepted') expect(r.decree?.params.rivalId).toBe('saito');
+  });
+  it('任命柴田领军 → assign_retainer war', async () => {
+    const r = await parseIntent('任命柴田勝家领军挂帅', state, mock);
+    expect(r.kind).toBe('accepted');
+    if (r.kind === 'accepted') {
+      expect(r.decree?.actionId).toBe('assign_retainer');
+      expect(r.decree?.params.retainerId).toBe('katsuie');
+      expect(r.decree?.params.role).toBe('war');
+    }
+  });
+  it('招募人才 → recruit_retainer（显式动作）', async () => {
+    const r = await parseIntent('广招天下浪人贤才', state, mock);
+    expect(r.kind === 'accepted' && r.decree?.actionId).toBe('recruit_retainer');
+  });
+  it('开垦尾张 → develop_land owari', async () => {
+    const r = await parseIntent('在尾张开垦新田', state, mock);
+    expect(r.kind === 'accepted' && r.decree?.actionId).toBe('develop_land');
+    if (r.kind === 'accepted') expect(r.decree?.params.provinceId).toBe('owari');
+  });
+  it('献金朝廷 → petition_court', async () => {
+    const r = await parseIntent('献金朝廷求叙任官位', state, mock);
+    expect(r.kind === 'accepted' && r.decree?.actionId).toBe('petition_court');
   });
 });
 

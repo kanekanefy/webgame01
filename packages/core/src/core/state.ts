@@ -17,6 +17,8 @@ export interface MemoryItem {
   turn: number;
   note: string;
 }
+export type Assignment = 'none' | 'war' | 'admin';
+
 export interface Retainer {
   id: string;
   name: string;
@@ -27,12 +29,16 @@ export interface Retainer {
   traits: string[];
   role: string;
   memory: MemoryItem[];
+  assignment: Assignment; // 领军/理政/闲置
+  alive: boolean; // 谋反/战死后离场
 }
 export interface RivalClan {
   id: string;
   name: string;
   strength: number;
   disposition: number; // [0,1], 越高越友好
+  atWar: boolean;
+  allied: boolean; // disposition≥0.8 自动结盟
 }
 export interface ClanStats {
   koku: number;
@@ -58,4 +64,9 @@ export interface GameState {
   rngState: number;
   actionLog: ActionRecord[];
   status: GameStatus;
+  // —— R4 世界丰富化 ——
+  daimyoAge: number; // 家督年龄
+  courtRank: number; // 官位 0..5
+  fame: number; // 名声 [0,1]
+  roninPool: Retainer[]; // 可招揽的浪人
 }

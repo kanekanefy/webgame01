@@ -1,6 +1,19 @@
 import { useState } from 'react';
 
-const SUGGESTIONS = ['把年贡定到四成', '征兵 50', '修筑水利', '举办祭典', '赏赐藤吉郎', '按兵不动'];
+const SUGGESTIONS = [
+  '把年贡定到四成',
+  '征兵 80',
+  '任命柴田勝家领军',
+  '进攻今川',
+  '和浅井结盟',
+  '招揽天下贤才',
+  '开垦尾张',
+  '献金朝廷求叙任',
+  '在尾张修筑水利',
+  '举办祭典',
+  '和藤吉郎对饮',
+  '按兵不动',
+];
 
 export function CommandBox({
   disabled,

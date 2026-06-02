@@ -42,9 +42,22 @@ beforeAll(async () => {
 });
 
 describe('action catalog', () => {
-  it('注册了全部 MVP 动作', () => {
+  it('注册了全部动作（R4 扩展后）', () => {
     expect(listActionIds().sort()).toEqual(
-      ['build_irrigation', 'freeform_act', 'hold_festival', 'levy_troops', 'reward_retainer', 'set_tax'].sort(),
+      [
+        'assign_retainer',
+        'attack_rival',
+        'build_irrigation',
+        'develop_land',
+        'freeform_act',
+        'hold_festival',
+        'levy_troops',
+        'negotiate',
+        'petition_court',
+        'recruit_retainer',
+        'reward_retainer',
+        'set_tax',
+      ].sort(),
     );
   });
 

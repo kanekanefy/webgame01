@@ -4,6 +4,7 @@ import { StatPanel } from './components/StatPanel';
 import { ActionBar } from './components/ActionBar';
 import { CommandBox } from './components/CommandBox';
 import { ReportLog } from './components/ReportLog';
+import { RivalsPanel, RetainersPanel } from './components/WorldPanels';
 import { EndingBanner } from './components/EndingBanner';
 import { playSfx, startAmbient, toggleMute, isMuted, unlockAudio } from './useAudio';
 import type { Decree } from './types';
@@ -104,6 +105,11 @@ export default function App() {
                 <div className="kin-rule flex-1" />
               </div>
               <ActionBar state={state} disabled={busy} onAdvance={handleAdvance} />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <RivalsPanel state={state} />
+              <RetainersPanel state={state} />
             </div>
 
             <ReportLog />

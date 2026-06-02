@@ -8,8 +8,10 @@ import type { ToolDef } from './provider.js';
  */
 export function buildToolDefs(state?: GameState, opts: { allowReject?: boolean } = {}): ToolDef[] {
   const provinceIds = state?.provinces.map((p) => p.id) ?? [];
-  const retainerIds = state?.retainers.map((r) => r.id) ?? [];
+  const retainerIds = state?.retainers.filter((r) => r.alive !== false).map((r) => r.id) ?? [];
+  const rivalIds = state?.rivals.map((r) => r.id) ?? [];
   const allowReject = opts.allowReject ?? true;
+  const enumOf = (ids: string[]) => (ids.length ? { enum: ids } : {});
 
   const tools: ToolDef[] = [
     {
@@ -78,6 +80,73 @@ export function buildToolDefs(state?: GameState, opts: { allowReject?: boolean }
           },
           required: ['retainerId'],
         },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'attack_rival',
+        description: '出兵进攻某邻国（野战）。仅当主公明确要攻打/讨伐/出阵某家时用。',
+        parameters: {
+          type: 'object',
+          properties: { rivalId: { type: 'string', description: '邻国 id', ...enumOf(rivalIds) } },
+          required: ['rivalId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'negotiate',
+        description: '遣使与某邻国通好/议和/结盟（提升好感，达阈值结盟）。',
+        parameters: {
+          type: 'object',
+          properties: { rivalId: { type: 'string', description: '邻国 id', ...enumOf(rivalIds) } },
+          required: ['rivalId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'assign_retainer',
+        description: '任命家臣职务：war=领军（增战力）、admin=理政（增治理）、none=闲置。',
+        parameters: {
+          type: 'object',
+          properties: {
+            retainerId: { type: 'string', description: '家臣 id', ...enumOf(retainerIds) },
+            role: { type: 'string', enum: ['war', 'admin', 'none'] },
+          },
+          required: ['retainerId', 'role'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'recruit_retainer',
+        description: '备礼招揽浪人贤才入仕（费 30 石，按名声成功）。',
+        parameters: { type: 'object', properties: {} },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'develop_land',
+        description: '于某领国开垦新田，招徕农户、增产（费 80 石）。',
+        parameters: {
+          type: 'object',
+          properties: { provinceId: { type: 'string', description: '领国 id', ...enumOf(provinceIds) } },
+          required: ['provinceId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'petition_court',
+        description: '献金朝廷求叙任官位（费 60 石，升官位、增威信名声）。',
+        parameters: { type: 'object', properties: {} },
       },
     },
     {

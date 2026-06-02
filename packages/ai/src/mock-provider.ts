@@ -117,9 +117,36 @@ function parseToToolCall(command: string, systemText: string): ToolCall {
     return reject('无可赏之家臣');
   }
 
-  // —— freeform_act：自由度兜底，几乎不拒 ——
   const retainer = matchByName(command, roster.retainers);
   const rival = matchByName(command, roster.rivals);
+
+  // —— R4 新动作 ——
+  if (/(进攻|攻打|攻取|讨伐|征讨|出阵|出兵打|开战|攻下|灭了)/.test(command) && rival) {
+    return { name: 'attack_rival', arguments: { rivalId: rival.id } };
+  }
+  if (/(结盟|通好|议和|讲和|和睦|修好|遣使|联盟)/.test(command) && rival) {
+    return { name: 'negotiate', arguments: { rivalId: rival.id } };
+  }
+  if (/(任命|委以|担任|领军|理政|挂帅|统兵|主政)/.test(command) && retainer) {
+    const role = /(领军|挂帅|统兵|带兵|出征)/.test(command)
+      ? 'war'
+      : /(理政|主政|内政|治国|奉行)/.test(command)
+        ? 'admin'
+        : 'none';
+    return { name: 'assign_retainer', arguments: { retainerId: retainer.id, role } };
+  }
+  if (/(招揽|招募|招贤|纳士|求贤|纳贤|招纳|揽才|广招|网罗|招徕|人才|贤才|贤士|英才)/.test(command)) {
+    return { name: 'recruit_retainer', arguments: {} };
+  }
+  if (/(开垦|垦荒|兴田|开荒|新田|垦田)/.test(command)) {
+    const prov = roster.provinces.find((p) => command.includes(p.name)) ?? roster.provinces[0];
+    if (prov) return { name: 'develop_land', arguments: { provinceId: prov.id } };
+  }
+  if (/(献金|朝廷|叙任|求官|官位|上洛|献礼)/.test(command)) {
+    return { name: 'petition_court', arguments: {} };
+  }
+
+  // —— freeform_act：自由度兜底，几乎不拒 ——
 
   if (/(喝酒|饮酒|对饮|宴|酒|吃饭|用膳|聚餐|交谈|谈心|叙话|闲谈|同乐|联络感情)/.test(command)) {
     return ff('social', retainer?.id);

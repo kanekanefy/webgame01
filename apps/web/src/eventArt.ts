@@ -25,6 +25,29 @@ const KIND_TO_ART: Readonly<Record<string, string>> = {
   festival: 'festival',
   ikki: 'ikki',
   // reward / error / rejected：无对应插画
+
+  // R4 扩展：新增事件/战斗 fact kind → 插画（部分 kind 复用同一张图）
+  battle_win: 'battle_win',
+  battle_lose: 'battle_lose',
+  conquer: 'conquer',
+  defend_win: 'defend_win',
+  defend_lose: 'defend_lose',
+  betrayal: 'betrayal',
+  recruit: 'recruit',
+  recruit_fail: 'recruit',
+  ronin_offer: 'recruit',
+  court: 'court',
+  court_favor: 'court',
+  merchant_gift: 'merchant_gift',
+  plague: 'plague',
+  flood: 'flood',
+  drought: 'flood',
+  bumper: 'bumper',
+  famine: 'plague',
+  negotiate: 'negotiate',
+  develop: 'develop',
+  omen: 'omen',
+  freeform: 'freeform',
 };
 
 /** 议题字符串 → 资源文件名（不含扩展名）。缺省即无图。 */
